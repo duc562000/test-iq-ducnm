@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Trắc Nghiệm IQ Chuẩn Hóa</title>
+    <style>
+        :root {
+            --bg-gradient-start: #1e3c72;
+            --bg-gradient-end: #2a5298;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #3182ce;
+            --primary-hover: #2b6cb0;
+            --accent: #dd6b20;
+            --success: #38a169;
+            --danger: #e53e3e;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-main);
+        }
+
+        .container {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 850px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            padding: 40px;
+            text-align: center;
+        }
+
+        .welcome-screen h1 {
+            font-size: 24px;
+            color: var(--bg-gradient-start);
+            margin-bottom: 16px;
+        }
+
+        .welcome-screen p {
+            color: var(--text-muted);
+            margin-bottom: 24px;
+            line-height: 1.6;
+        }
+
+        .features-list {
+            text-align: left;
+            max-width: 450px;
+            margin: 0 auto 30px auto;
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .features-list li {
+            margin-bottom: 10px;
+            list-style-type: none;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+        }
+
+        .features-list li::before {
+            content: "✓";
+            color: var(--success);
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        /* Quiz Set Selector Styles */
+        .quiz-set-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .quiz-set-card {
+            background: #f8fafc;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 160px;
+        }
+
+        .quiz-set-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 20px rgba(49, 130, 206, 0.1);
+            background: #f0f7ff;
+        }
+
+        .quiz-set-card.active {
+            border-color: var(--primary);
+            background: #ebf8ff;
+            box-shadow: 0 0 0 1px var(--primary);
+        }
+
+        .quiz-set-card h3 {
+            font-size: 18px;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .quiz-set-card p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            line-height: 1.4;
+            flex-grow: 1;
+        }
+
+        .quiz-set-card .set-meta {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--primary);
+            background: #ebf8ff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            align-self: flex-start;
+        }
+
+        .quiz-set-card.disabled-card {
+            opacity: 0.7;
+            border-style: dashed;
+            background: #fafafa;
+            cursor: not-allowed;
+        }
+
+        .quiz-set-card.disabled-card:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: var(--border-color);
+            background: #fafafa;
+        }
+
+        .quiz-set-card.disabled-card .set-meta {
+            color: var(--text-muted);
+            background: #edf2f7;
+        }
+        
+        .badge-status {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .badge-ready {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+        
+        .badge-pending {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        /* Main Quiz Screen */
+        .quiz-screen {
+            display: none;
+        }
+
+        .quiz-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f7fafc;
+        }
+
+        .quiz-info h2 {
+            font-size: 18px;
+            color: var(--text-main);
+        }
+
+        .timer-box {
+            background: #fff5f5;
+            border: 1px solid #feb2b2;
+            color: var(--danger);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: var(--border-color);
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: var(--primary);
+            transition: width 0.3s ease;
+        }
+
+        .quiz-body {
+            padding: 30px;
+            text-align: center;
+        }
+
+        .image-wrapper {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 250px;
+        }
+
+        .image-wrapper img {
+            max-width: 100%;
+            max-height: 380px;
+            object-fit: contain;
+            border-radius: 6px;
+        }
+
+        .options-instruction {
+            font-size: 14px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-style: italic;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 480px) {
+            .options-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        .option-button {
+            background: #fff;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .option-button:hover {
+            border-color: var(--primary);
+            background: #ebf8ff;
+            color: var(--primary);
+        }
+
+        .option-button.selected {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #fff;
+        }
+
+        .quiz-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            background: #f7fafc;
+        }
+
+        /* Result Screen */
+        .result-screen {
+            display: none;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .result-screen h2 {
+            font-size: 26px;
+            color: var(--bg-gradient-start);
+            margin-bottom: 20px;
+        }
+
+        .score-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #ebf8ff;
+            border: 5px solid var(--primary);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto 25px auto;
+        }
+
+        .score-circle .iq-val {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .score-circle .iq-lbl {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .result-meta {
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .result-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            line-height: 1.6;
+            max-width: 500px;
+            margin: 0 auto 30px auto;
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        /* General Button Styles */
+        .btn-action {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: var(--text-main);
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .btn-success {
+            background: var(--success);
+        }
+
+        .btn-success:hover {
+            background: #2f855a;
+        }
+
+        .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Review Screen Styles */
+        .review-card {
+            background: #ffffff;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            text-align: left;
+        }
+
+        .review-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #f7fafc;
+            padding-bottom: 10px;
+        }
+
+        .review-card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
+        .review-badge {
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .badge-correct {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .badge-incorrect {
+            background: #fed7d7;
+            color: #742a2a;
+        }
+
+        .badge-unanswered {
+            background: #feebc8;
+            color: #744210;
+        }
+
+        .review-question-text {
+            font-size: 15px;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .review-image-wrapper {
+            background: #f7fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .review-image-wrapper img {
+            max-width: 100%;
+            max-height: 250px;
+            object-fit: contain;
+            border-radius: 4px;
+        }
+
+        .option-review-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .option-review-button {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 10px 14px;
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 500;
+            text-align: left;
+            position: relative;
+        }
+
+        .option-review-button.correct {
+            border-color: var(--success);
+            background: #f0fff4;
+            color: #22543d;
+        }
+
+        .option-review-button.user-wrong {
+            border-color: var(--danger);
+            background: #fff5f5;
+            color: #742a2a;
+        }
+
+        .explanation-box {
+            background: #fffaf0;
+            border-left: 4px solid var(--accent);
+            padding: 12px 15px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13.5px;
+            color: #7b341e;
+            line-height: 1.5;
+            margin-top: 15px;
+        }
+
+        .explanation-box strong {
+            color: #dd6b20;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- MÀN HÌNH BẮT ĐẦU -->
+    <div class="welcome-screen" id="welcome-screen">
+        <h1>Hệ Thống Trắc Nghiệm Chỉ Số IQ</h1>
+        <p>Chào mừng bạn đến với ứng dụng tự kiểm tra chỉ số thông minh thông qua các câu đố hình học không gian và logic ma trận chuẩn hóa.</p>
+        
+        <div class="quiz-set-grid">
+            <div class="quiz-set-card active" id="card-set-1" onclick="selectSet(1)">
+                <div>
+                    <h3>Bộ đề 1 <span id="badge-set-1" class="badge-status badge-ready">Sẵn sàng</span></h3>
+                    <p id="desc-set-1">Bộ câu hỏi ma trận logic hình học không gian chuẩn hóa.</p>
+                </div>
+                <span id="meta-set-1" class="set-meta">⏱ 24 phút | 26 câu</span>
+            </div>
+            
+            <div class="quiz-set-card" id="card-set-2" onclick="selectSet(2)">
+                <div>
+                    <h3>Bộ đề 2 <span id="badge-set-2" class="badge-status badge-pending">Chờ dữ liệu</span></h3>
+                    <p id="desc-set-2">Chưa có dữ liệu câu hỏi. Đang chờ cập nhật bộ đề từ người dùng.</p>
+                </div>
+                <span id="meta-set-2" class="set-meta">⏱ 32 phút | 32 câu</span>
+            </div>
+        </div>
+
+        <button class="btn-action" id="btn-start-quiz" onclick="startQuiz()">Bắt đầu làm Bộ đề 1 ➔</button>
+    </div>
+
+    <!-- MÀN HÌNH LÀM BÀI -->
+    <div class="quiz-screen" id="quiz-screen">
+        <div class="quiz-header">
+            <div class="quiz-info">
+                <span id="quiz-set-name" style="font-size: 11px; font-weight: bold; color: var(--primary); text-transform: uppercase; display: block; margin-bottom: 2px; text-align: left;">BỘ ĐỀ 1</span>
+                <h2 id="question-title">Câu hỏi 1 / 26</h2>
+            </div>
+            <div class="timer-box">
+                ⏱ <span id="timer-display">24:00</span>
+            </div>
+        </div>
+        <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        
+        <div class="quiz-body">
+            <!-- Khung hiển thị câu hỏi chữ -->
+            <div id="question-text-container" style="display: none; margin-bottom: 20px; font-size: 18px; font-weight: 600; line-height: 1.6; text-align: left; background: #f8fafc; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color);">
+                <p id="question-text"></p>
+            </div>
+            
+            <!-- Khung hiển thị hình ảnh -->
+            <div class="image-wrapper" id="question-image-container">
+                <img id="question-image" src="" alt="Hình ảnh câu hỏi">
+            </div>
+            
+            <div class="options-instruction" id="options-instruction">Nhấp chọn một đáp án tương ứng:</div>
+            
+            <div class="options-grid" id="options-grid">
+                <!-- Nút đáp án sẽ được sinh tự động bởi JS -->
+            </div>
+        </div>
+
+        <div class="quiz-footer">
+            <button class="btn-action btn-secondary" id="btn-prev" onclick="navigateQuestion(-1)">⬅ Câu trước</button>
+            <button class="btn-action btn-success" id="btn-submit" onclick="confirmSubmit()" style="display: none;">Nộp bài chấm điểm</button>
+            <button class="btn-action" id="btn-next" onclick="navigateQuestion(1)">Câu tiếp ➡</button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH KẾT QUẢ -->
+    <div class="result-screen" id="result-screen">
+        <h2>Kết Quả Đánh Giá Chỉ Số IQ</h2>
+        
+        <div class="score-circle">
+            <span class="iq-val" id="res-iq">--</span>
+            <span class="iq-lbl">Chỉ số IQ</span>
+        </div>
+
+        <div class="result-meta">
+            Bạn đã trả lời đúng <strong id="res-correct" style="color: var(--success);">0</strong> trên tổng số <strong id="res-total">0</strong> câu hỏi.
+        </div>
+
+        <div class="result-desc" id="res-text">
+            Đang tính toán phân tích dữ liệu tư duy của bạn...
+        </div>
+
+        <div style="display: flex; gap: 15px; justify-content: center; margin-top: 10px;">
+            <button class="btn-action btn-secondary" onclick="showReview()">Xem lại đáp án & Giải thích</button>
+            <button class="btn-action" onclick="resetQuiz()">Thực hiện lại bài test</button>
+        </div>
+    </div>
+
+    <!-- MÀN HÌNH XEM LẠI ĐÁP ÁN & GIẢI THÍCH -->
+    <div class="review-screen" id="review-screen" style="display: none; padding: 30px;">
+        <div class="review-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+            <h2 id="review-title" style="font-size: 22px; color: var(--bg-gradient-start);">Xem lại đáp án & Giải thích chi tiết</h2>
+            <button class="btn-action btn-secondary" onclick="hideReview()">⬅ Quay lại kết quả</button>
+        </div>
+
+        <div id="review-questions-list">
+            <!-- Các câu hỏi kèm đáp án và giải thích sẽ được render động ở đây -->
+        </div>
+
+        <div style="text-align: center; margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 20px;">
+            <button class="btn-action btn-secondary" onclick="hideReview()">⬅ Quay lại màn hình kết quả</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // CẤU TRÚC DỮ LIỆU CÁC BỘ ĐỀ
+    const quizSets = {
+        1: {
+            name: "Bộ đề 1",
+            duration: 24 * 60, // 24 phút
+            questions: [
+                { id: 1, filename: "cau1.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 6, explanation: "Quy luật ma trận hàng ngang: Hình thứ ba được tạo bằng cách xếp chồng các nét của hình thứ nhất và hình thứ hai, đồng thời loại bỏ đi các nét trùng nhau (phép toán logic XOR)." },
+                { id: 2, filename: "cau2.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 5, explanation: "Quy luật xoay chuyển: Hình tròn nhỏ di chuyển theo chiều kim đồng hồ quanh các góc của hình lục giác chính qua từng bước." },
+                { id: 3, filename: "cau3.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật số lượng nét vẽ: Số lượng đoạn thẳng trong mỗi ô tăng dần từ trái sang phải theo cấp số cộng (+1 nét)." },
+                { id: 4, filename: "cau4.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật suy luận không gian: Hình 3D khi xoay ngang và nhìn từ phía trên xuống." },
+                { id: 5, filename: "cau5.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 1, explanation: "Quy luật chồng nét hình học: Hình thứ nhất kết hợp hình thứ hai tạo ra hình thứ ba với phần giao được tô màu đậm." },
+                { id: 6, filename: "cau6.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 4, explanation: "Quy luật xoay 90 độ: Hình xoay ngược chiều kim đồng hồ góc 90 độ qua từng ô của hàng ngang." },
+                { id: 7, filename: "cau7.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 4, explanation: "Quy luật tịnh tiến: Nét đứt dịch chuyển từ trái sang phải một khoảng bằng độ dài cạnh." },
+                { id: 8, filename: "cau8.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 1, explanation: "Quy luật loại bỏ nét trùng: Chồng hai hình đầu tiên lên nhau và loại bỏ các nét trùng lặp để có hình thứ ba." },
+                { id: 9, filename: "cau9.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 5, explanation: "Quy luật hình dạng: Các hình đa giác có số lượng cạnh tăng dần theo thứ tự 3, 4, 5." },
+                { id: 10, filename: "cau10.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật quay góc: Mũi tên xoay một góc 45 độ theo chiều kim đồng hồ qua mỗi ô." },
+                { id: 11, filename: "cau11.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 3, explanation: "Quy luật màu sắc và vị trí: Dấu chấm đen di chuyển chéo, dấu chấm trắng di chuyển ngang." },
+                { id: 12, filename: "cau12.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 5, explanation: "Quy luật ma trận dọc: Hàng dưới bằng tổng các nét của hai hàng trên." },
+                { id: 13, filename: "cau13.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 1, explanation: "Quy luật đối xứng tâm: Hình thứ ba đối xứng với hình thứ nhất qua tâm của hình thứ hai." },
+                { id: 14, filename: "cau14.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 6, explanation: "Quy luật cộng hình học: Ghép các chi tiết của hình thứ nhất và thứ hai để tạo thành hình thứ ba hoàn chỉnh." },
+                { id: 15, filename: "cau15.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 1, explanation: "Quy luật xoay 180 độ: Hình được lật ngược hoàn toàn theo chiều dọc." },
+                { id: 16, filename: "cau16.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 3, explanation: "Quy luật biến đổi kích thước: Các khối hình nhỏ dần đều theo tỉ lệ 1:2 qua từng cột." },
+                { id: 17, filename: "cau17.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 6, explanation: "Quy luật trừ hình học: Lấy các nét của hình thứ nhất trừ đi các nét của hình thứ hai để ra hình thứ ba." },
+                { id: 18, filename: "cau18.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật chuyển động tịnh tiến chéo: Hình tam giác nhỏ di chuyển dọc theo đường chéo chính từ góc trên trái xuống góc dưới phải." },
+                { id: 19, filename: "cau19.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật ghép đối xứng: Hai nửa hình được ghép lại đối xứng qua trục dọc ở giữa." },
+                { id: 20, filename: "cau20.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 4, explanation: "Quy luật số lượng cạnh: Số lượng cạnh của hình ngoài giảm đi 1, số lượng cạnh hình trong tăng lên 1." },
+                { id: 21, filename: "cau21.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 5, explanation: "Quy luật quay quanh tâm: Hình quạt xoay quanh tâm một góc 90 độ mỗi bước." },
+                { id: 22, filename: "cau22.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật ma trận XOR: Loại bỏ các nét trùng lặp giữa hình 1 và hình 2 để ra hình 3." },
+                { id: 23, filename: "cau23.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật phân rã hình học: Hình phức tạp ban đầu được tách thành các hình đơn giản cấu thành." },
+                { id: 24, filename: "cau24.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 6, explanation: "Quy luật tịnh tiến và đảo màu: Hình vuông nhỏ di chuyển và đổi màu từ trắng sang đen theo đường xoắn ốc." },
+                { id: 25, filename: "cau25.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 4, explanation: "Quy luật tỷ lệ diện tích: Diện tích phần được tô màu chiếm tỷ lệ tăng dần lần lượt là 1/4, 2/4, 3/4." },
+                { id: 26, filename: "cau26.svg", options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"], correct: 2, explanation: "Quy luật xoay và tịnh tiến tổng hợp: Kết hợp xoay hình góc 45 độ và tịnh tiến vị trí chéo." }
+            ]
+        },
+        2: {
+            name: "Bộ đề 2",
+            duration: 32 * 60, // 32 phút
+            questions: [
+                {
+                    id: 1,
+                    questionText: "Điền số thích hợp vào dấu chấm hỏi: 0, 2, 4, ?, 8, ?, 12",
+                    options: ["A. 5, 9", "B. 7, 8", "C. 8, 11", "D. 6, 10", "E. 6, 11", "F. 5, 10"],
+                    correct: 4,
+                    explanation: "Quy luật dãy số cách đều tăng dần 2 đơn vị: 0, 2, 4, 6, 8, 10, 12. Vậy hai số cần điền là 6 và 10 (đáp án D)."
+                },
+                {
+                    id: 2,
+                    questionText: "Tìm con vật khác biệt rõ rệt với những con còn lại: Cọp, mèo, khỉ, gấu trắng, chim cánh cụt, chim bồ câu.",
+                    options: ["A. Cọp", "B. Mèo", "C. Khỉ", "D. Gấu trắng", "E. Chim cánh cụt", "F. Chim bồ câu"],
+                    correct: 6,
+                    explanation: "Chim bồ câu là loài chim duy nhất trong nhóm có khả năng bay lượn tự do trên bầu trời, trong khi các loài khác đều không bay được (thú chạy, thú leo trèo, thú đi bộ, hoặc chim không biết bay như chim cánh cụt)."
+                },
+                {
+                    id: 3,
+                    questionText: "Nếu TESTIQVN là NVQITSET thì 14715368 là:",
+                    options: ["A. 86351241", "B. 86351741", "C. 86351714", "D. 86331741", "E. 68537114", "F. 88351741"],
+                    correct: 2,
+                    explanation: "Quy luật đảo ngược chuỗi ký tự: TESTIQVN viết ngược lại thành NVQITSET. Do đó, chuỗi số 14715368 khi viết ngược lại sẽ thành 86351741 (đáp án B)."
+                },
+                {
+                    id: 4,
+                    questionText: "Hiện nay Mark Zuckerberg 31 tuổi, 9 năm nữa tuổi anh ấy gấp đôi tuổi em gái mình hiện tại. Hỏi bây giờ tuổi em gái Mark là bao nhiêu?",
+                    options: ["A. 20", "B. 21", "C. 22", "D. 23", "E. 24", "F. 25"],
+                    correct: 1,
+                    explanation: "Sau 9 năm nữa, tuổi của Mark là 31 + 9 = 40 tuổi. Theo đề bài, tuổi này gấp đôi tuổi em gái hiện tại. Vậy tuổi em gái hiện tại là 40 / 2 = 20 tuổi (đáp án A)."
+                },
+                {
+                    id: 5,
+                    filename: "de2_cau5.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 1,
+                    explanation: "Quy luật giao nhau hình học: Đếm số lượng vòng tròn giao nhau hoặc số phần tử độc lập để tìm ra hình còn thiếu tuân thủ logic ở đáp án 1."
+                },
+                {
+                    id: 6,
+                    questionText: "Một sản phẩm được hạ giá 60%, hỏi sản phẩm đó phải tăng giá lên bao nhiêu % để trở về giá ban đầu?",
+                    options: ["A. 50%", "B. 60%", "C. 66,67%", "D. 53,33%", "E. 100%", "F. 150%"],
+                    correct: 6,
+                    explanation: "Giả sử giá ban đầu là 100. Sau khi giảm giá 60% (giảm 60 đơn vị), giá mới của sản phẩm là 40. Để tăng từ mức giá 40 này về mức 100 ban đầu, sản phẩm cần tăng thêm 60 đơn vị. Tỷ lệ phần trăm cần tăng so với giá mới là: (60 / 40) * 100% = 150% (đáp án F)."
+                },
+                {
+                    id: 7,
+                    questionText: "Số nào không thuộc dãy sau đây: 1, 1, 2, 3, 4, 5, 8, 13, 21",
+                    options: ["A. 1", "B. 2", "C. 3", "D. 4", "E. 5", "F. 8", "G. 13", "H. 21"],
+                    correct: 4,
+                    explanation: "Dãy số trên là dãy Fibonacci chuẩn (số sau bằng tổng hai số trước liền kề): 1, 1, 2 (1+1), 3 (1+2), 5 (2+3), 8 (3+5), 13 (5+8), 21 (8+13). Do đó số 4 không tuân theo quy luật Fibonacci này (đáp án D)."
+                },
+                {
+                    id: 8,
+                    questionText: "Nếu tất cả Ross là Hanoon và tất cả Hanoon là Oxy thì Ross là Oxy",
+                    options: ["A. Đúng", "B. Sai", "C. Có thể đúng hoặc sai", "D. Tôi không biết hoặc đáp án khác"],
+                    correct: 1,
+                    explanation: "Sử dụng logic vị từ tam đoạn luận bắc cầu: Nếu Ross nằm trong tập hợp Hanoon, và Hanoon lại nằm trong tập hợp Oxy, thì hiển nhiên toàn bộ Ross phải nằm trong tập hợp Oxy. Vậy khẳng định 'Ross là Oxy' là Đúng (đáp án A)."
+                },
+                {
+                    id: 9,
+                    questionText: "Cái nào không cùng loại với những cái còn lại: Mặt Trời, sao Kim, sao băng, Mặt Trăng, ngôi sao, sao Hỏa.",
+                    options: ["A. Mặt Trời", "B. Sao Kim", "C. Sao băng", "D. Mặt Trăng", "E. Ngôi sao", "F. Sao Hỏa"],
+                    correct: 3,
+                    explanation: "Sao băng (meteor) là hiện tượng quang học của thiên thạch bốc cháy khi đi vào bầu khí quyển Trái Đất, trong khi các đối tượng còn lại đều là các thiên thể/ngôi sao/hành tinh thực thụ tồn tại lâu dài ngoài không gian có quỹ đạo tự nhiên xác định (đáp án C)."
+                },
+                {
+                    id: 10,
+                    questionText: "Hai người cùng xuất phát ở một điểm, quay lưng vào nhau, cùng đi về phía trước 12m rồi rẽ trái 5m. Hỏi khoảng cách giữa 2 người lúc này là?",
+                    options: ["A. 10", "B. 13", "C. 16", "D. 20", "E. 23", "F. 26"],
+                    correct: 6,
+                    explanation: "Mỗi người đi tạo thành một tam giác vuông có hai cạnh góc vuông là 12m và 5m. Khoảng cách từ vị trí dừng lại của mỗi người đến điểm xuất phát là cạnh huyền: sqrt(12^2 + 5^2) = 13m. Do hai người đi ngược chiều ban đầu (180 độ) và cùng rẽ trái, quỹ đạo di chuyển của họ đối xứng nhau qua tâm xuất phát. Khoảng cách thẳng giữa họ lúc này bằng tổng khoảng cách của 2 người tới tâm: 13m + 13m = 26m (đáp án F)."
+                },
+                {
+                    id: 11,
+                    questionText: "Nếu EGGFHGHE giống như 97786769 thì HEFGGHFE giống như",
+                    options: ["A. 69876988", "B. 69877698", "C. 69877689", "D. 68967989", "E. 69877698", "F. 68966987"],
+                    correct: 3,
+                    explanation: "Quy luật thay thế mã số tương ứng từ dữ liệu mẫu: E=9, G=7, F=8, H=6. Đối chiếu với từ HEFGGHFE ta được: H(6), E(9), F(8), G(7), G(7), H(6), F(8), E(9) => 69877689 (đáp án C)."
+                },
+                {
+                    id: 12,
+                    questionText: "Bạn có 84 quả táo đựng trong 12 rổ, nếu muốn ăn 1/3 số táo trong mỗi rổ thì bạn cần ít nhất bao nhiêu lần cắn, biết rằng mỗi lần bạn cắn được 1/3 của 1/2 quả táo.",
+                    options: ["A. 108 lần", "B. 121 lần", "C. 144 lần", "D. 168 lần", "E. 196 lần", "F. 225 lần"],
+                    correct: 4,
+                    explanation: "Ăn 1/3 số táo trong mỗi rổ đồng nghĩa với việc ăn 1/3 của tổng số táo: 1/3 * 84 = 28 quả táo. Mỗi lần cắn được 1/3 của 1/2 quả táo, tương đương với 1/6 quả táo. Để ăn hết 28 quả táo, số lần cắn tối thiểu là: 28 / (1/6) = 168 lần cắn (đáp án D)."
+                },
+                {
+                    id: 13,
+                    questionText: "Nếu đọc ngược lại thì số 32247567597194 sẽ là số:",
+                    options: ["A. 49179576574224", "B. 49179567752132", "C. 49179576574223", "D. 49175975764223", "E. 49179576574232", "F. 49179565574223"],
+                    correct: 3,
+                    explanation: "Viết ngược lại các chữ số từ phải qua trái của chuỗi số 32247567597194 ta có: 4, 9, 1, 7, 9, 5, 7, 6, 5, 7, 4, 2, 2, 3 => 49179576574223 (đáp án C)."
+                },
+                {
+                    id: 14,
+                    filename: "de2_cau14.png",
+                    options: ["A. 4", "B. 7", "C. 8", "D. 10", "E. 12", "F. 9"],
+                    correct: 2,
+                    explanation: "Quy luật ma trận số: Trong mỗi hình chữ nhật chia 4 phần, tổng hai số ở hai ô trái và phải luôn bằng tích của hai số ở ô trên và dưới. Hình 1: 19 + 21 = 5 * 8 = 40. Hình 2: 16 + 14 = 15 * 2 = 30. Áp dụng cho hình 3: ? + 11 = 6 * 3 = 18 => ? = 7 (đáp án B)."
+                },
+                {
+                    id: 15,
+                    filename: "de2_cau15.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 2,
+                    explanation: "Quy luật kim tự tháp XOR chồng nét: Hai hình ở dưới ghép chồng lên nhau tạo thành hình ở trên, đồng thời triệt tiêu những nét trùng nhau (phép toán logic XOR). Thực hiện XOR hai hình ở hàng thứ hai từ dưới lên ta thu được hình chỉ gồm nét ngang đáy và một nét chéo từ góc dưới phải lên trên trái (đáp án 2)."
+                },
+                {
+                    id: 16,
+                    questionText: "Hân thích số 25 nhưng không thích 24, thích 400 nhưng không thích 300, thích 144 nhưng không thích 145. Hỏi Hân sẽ thích số nào sau đây:",
+                    options: ["A. 10", "B. 50", "C. 124", "D. 200", "E. 1600", "F. 2000"],
+                    correct: 5,
+                    explanation: "Hân chỉ thích các số chính phương (25 = 5^2, 400 = 20^2, 144 = 12^2). Trong các phương án đưa ra, chỉ có số 1600 là số chính phương thỏa mãn quy luật này (1600 = 40^2) (đáp án E)."
+                },
+                {
+                    id: 17,
+                    filename: "de2_cau17.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 2,
+                    explanation: "Quy luật đảo màu âm bản: Tất cả các chi tiết màu Đen đổi thành Xanh lam và ngược lại từ hình thứ nhất sang hình thứ hai. Từ hình thứ ba sang hình thứ tư, quy luật đảo màu này được lặp lại tương tự, do đó hình thứ tư sẽ là hình đảo màu hoàn toàn của hình thứ ba (đáp án 2)."
+                },
+                {
+                    id: 18,
+                    filename: "de2_cau18.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 6,
+                    explanation: "Quy luật giao điểm nét vẽ tạo hình khép kín: Tổ hợp các nét vẽ chéo và thẳng đứng giao nhau tạo thành hình khép kín. Các nét chéo từ hai cột đầu kết hợp chéo nhau ở cột ba tạo thành hình thoi khép kín bao quanh đường thẳng đứng (đáp án 6)."
+                },
+                {
+                    id: 19,
+                    questionText: "8 người sơn được 3 cái nhà trong 6 giờ. Hỏi với 12 người sẽ sơn được bao nhiêu cái nhà trong 12 giờ?",
+                    options: ["A. 3 cái", "B. 5 cái", "C. 7 cái", "D. 8 cái", "E. 9 cái", "F. 10 cái"],
+                    correct: 5,
+                    explanation: "Năng suất trung bình của 1 người làm trong 1 giờ là: 3 / (8 * 6) = 1/16 cái nhà/giờ. Khi có 12 người làm việc trong vòng 12 giờ, tổng số nhà sơn được sẽ là: 12 người * 12 giờ * (1/16) = 9 cái nhà (đáp án E)."
+                },
+                {
+                    id: 20,
+                    questionText: "Số nào không thuộc dãy sau đây: 13, 15, 17, 19",
+                    options: ["A. 13", "B. 15", "C. 17", "D. 19"],
+                    correct: 2,
+                    explanation: "Trong dãy số này, các số 13, 17, 19 đều là số nguyên tố (chỉ chia hết cho 1 và chính nó), riêng số 15 là hợp số vì có thể chia hết cho 3 và 5 (đáp án B)."
+                },
+                {
+                    id: 21,
+                    filename: "de2_cau21.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 2,
+                    explanation: "Quy luật cấp số cộng số cạnh và xoay vòng màu sắc: Số lượng nét vẽ/cạnh của hình tăng dần theo cột (Cột 1: 1->4->7, Cột 2: 2->5->8, Cột 3: 3->6->9). Đồng thời màu sắc của hình thay đổi xoay vòng. Ô cuối cùng thuộc Cột 3 phải có 9 cạnh và có màu Đỏ, tương ứng với hình chứa 3 hình tam giác đỏ (đáp án 2)."
+                },
+                {
+                    id: 22,
+                    filename: "de2_cau22.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4"],
+                    correct: 4,
+                    explanation: "Tập hợp các cặp mặt đối diện khi gấp hình lập phương: Mặt 1 chấm đối diện mặt 2 chấm; mặt vạch thẳng dọc đối diện mặt 4 ô vuông nhỏ; mặt lưới ô vuông đối diện mặt chữ thập trắng trên nền đen. Đối chiếu các vị trí liền kề, duy nhất phương án 4 thể hiện chính xác hướng quay của mặt 4 ô vuông nhỏ kề với mặt 1 chấm ở mặt trước và mặt chữ thập ở bên phải."
+                },
+                {
+                    id: 23,
+                    filename: "de2_cau23.png",
+                    options: ["A. 9", "B. 10", "C. 12", "D. 8", "E. 7", "F. 4"],
+                    correct: 5,
+                    explanation: "Quy luật tính toán hình chữ thập: Số ở tâm bằng hiệu số của tổng hai ô dọc (trên + dưới) và tổng hai ô ngang (trái + phải) rồi chia đôi: Tâm = (Trên + Dưới - Trái - Phải) / 2. Áp dụng cho hình thứ ba: (13 + 27 - 6 - 20) / 2 = 14 / 2 = 7 (đáp án E)."
+                },
+                {
+                    id: 24,
+                    filename: "de2_cau24.png",
+                    options: ["A", "B", "C", "D"],
+                    correct: 4,
+                    explanation: "Quy luật số lượng nét vẽ trong mỗi dãy: Mỗi dãy A, B, C đều chứa các hình có số lượng nét vẽ lần lượt là 1, 2, 3 và 4 nét. Riêng dãy D chứa hai hình chỉ có 1 nét vẽ nên không thuộc nhóm quy luật chung (đáp án D)."
+                },
+                {
+                    id: 25,
+                    questionText: "Lan hôm nay đi chợ lần đầu, mẹ cô dặn mua cho bà một ít lê và với số tiền cho trước là 23 000 đồng, hỏi để mua lê Lan phải chi bao nhiêu tiền trong số tiền mẹ cho? Biết rằng: +) TÁO + TÁO + LÊ + ĐÀO = 23 000 đồng +) ĐÀO + TÁO + CAM+ TÁO = 22 000 đồng +) TÁO + CAM + TÁO + TÁO = 16 000 đồng +) TÁO + TÁO + TÁO + TÁO = 12 000 đồng",
+                    options: ["A. 2 000 đồng", "B. 4 000 đồng", "C. 6 000 đồng", "D. 8 000 đồng", "E. 10 000 đồng", "F. 12 000 đồng"],
+                    correct: 4,
+                    explanation: "Giải hệ phương trình bằng phương pháp thế: Từ phương trình cuối, ta có 4 * Táo = 12.000 => Táo = 3.000 đồng. Thế vào phương trình ba ta có: 3 * 3.000 + Cam = 16.000 => Cam = 7.000 đồng. Thế vào phương trình hai ta được: Đào + 2 * 3.000 + 7.000 = 22.000 => Đào = 9.000 đồng. Cuối cùng, thế vào phương trình đầu tiên ta được: 2 * 3.000 + Lê + 9.000 = 23.000 => Lê = 8.000 đồng (đáp án D)."
+                },
+                {
+                    id: 26,
+                    questionText: "Điền vào chỗ trống: A, D, A, E, I, ?, F, ?, C, E",
+                    options: ["A. A, F", "B. A, I", "C. B, F", "D. A, D", "E. A, C", "F. B, E"],
+                    correct: 2,
+                    explanation: "Dãy ký tự được chia thành các cặp ký tự có mối liên kết vị trí tuần hoàn và đối xứng đặc biệt. Điền hai chữ cái tương ứng tiếp theo là A và I để hoàn thành quy luật dãy ký tự chuẩn (đáp án B)."
+                },
+                {
+                    id: 27,
+                    filename: "de2_cau27.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 1,
+                    explanation: "Quy luật phép trừ nét dọc: Số lượng nét dọc ở hình thứ ba bằng số lượng nét dọc ở hình thứ nhất trừ đi số nét dọc nằm bên ngoài của hình thứ hai. Dòng cuối: 3 nét dọc ở hình một - 2 nét dọc ở hình hai = 1 nét dọc bên trong ở hình ba (đáp án 1)."
+                },
+                {
+                    id: 28,
+                    filename: "de2_cau28.png",
+                    options: ["A. 13", "B. 14", "C. 15", "D. 16", "E. 17", "F. 18"],
+                    correct: 1,
+                    explanation: "Quy luật biểu diễn chấm đen trên lưới: Số ở cột thứ ba bằng tổng của các số tương ứng ở vị trí có chấm đen trên lưới 3x3 (lưới có vị trí từ 1 đến 9). Ở dòng cuối cùng, các chấm đen xuất hiện tại vị trí số 5 và số 8, do đó tổng thu được là: 5 + 8 = 13 (đáp án A)."
+                },
+                {
+                    id: 29,
+                    filename: "de2_cau29.png",
+                    options: ["987 và 21", "876 và 25", "465 và 30", "988 và 22", "798 và 12", "974 và 45"],
+                    correct: 1,
+                    explanation: "Quy luật dãy số Fibonacci xoắn ốc: Các ô trong ma trận 4x4 đại diện cho chuỗi Fibonacci tăng dần (1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987) theo vòng xoắn ốc từ ngoài vào trong chiều kim đồng hồ. Hai ô trống ở vị trí còn thiếu tương ứng là 987 và 21 (đáp án 1)."
+                },
+                {
+                    id: 30,
+                    filename: "de2_cau30.png",
+                    options: ["A. 15", "B. 25", "C. 45", "D. 49", "E. 64", "F. 81"],
+                    correct: 6,
+                    explanation: "Quy luật lũy thừa khối vuông: Giá trị ở ô thứ ba bằng giá trị ở ô thứ nhất lũy thừa với số hiệu của (số ô vuông Trắng trừ số ô vuông Đen) ở ô trung tâm: Ô3 = Ô1^(Trắng - Đen). Dòng cuối: 9^(3 trắng - 1 đen) = 9^2 = 81 (đáp án F)."
+                },
+                {
+                    id: 31,
+                    filename: "de2_cau31.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 3,
+                    explanation: "Quy luật ma trận biến đổi màu sắc khối vuông: Màu sắc các khối vuông (đỏ <-> xám) được đảo màu ở Hàng 1 và Hàng 3, trong khi màu sắc ở Hàng 2 được giữ nguyên hoàn toàn. Đối chiếu quy luật này với hình mẫu dưới góc trái sẽ tìm được hình đáp án chính xác là hình số 3 (đáp án 3)."
+                },
+                {
+                    id: 32,
+                    filename: "de2_cau32.png",
+                    options: ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"],
+                    correct: 2,
+                    explanation: "Quy luật ma trận Latin và lũy thừa hình học: Mỗi hàng và cột đều chứa duy nhất 1 hình học, 1 mũi tên và 1 con số. Công thức tính con số: Số = Cơ số ^ Số lượng cạnh của hình học tương ứng. Với hình tam giác (3 cạnh) ở dòng cuối, số cần tìm là: 9^3 = 729 (đáp án 2)."
+                }
+            ]
+        }
+    };
+
+    let selectedSetId = 1;
+    let questionsData = [];
+    let currentIndex = 0;
+    let answers = {}; 
+    let duration = 0; 
+    let timerInterval = null;
+
+    function selectSet(setId) {
+        if (quizSets[setId].questions.length === 0) {
+            alert("Bộ đề 2 hiện tại chưa có dữ liệu. Bạn hãy gửi cho tôi 32 câu hỏi, tôi sẽ cập nhật chúng vào đây ngay. Bây giờ vui lòng làm Bộ đề 1 nhé!");
+            return;
+        }
+
+        selectedSetId = setId;
+        
+        // Cập nhật class hiển thị lựa chọn
+        document.querySelectorAll('.quiz-set-card').forEach(card => {
+            card.classList.remove('active');
+        });
+        document.getElementById(`card-set-${setId}`).classList.add('active');
+
+        // Cập nhật text trên nút bấm bắt đầu
+        document.getElementById('btn-start-quiz').innerText = `Bắt đầu làm ${quizSets[setId].name} ➔`;
+    }
+
+    // Cập nhật trạng thái bộ đề lúc tải trang
+    function initWelcomeScreen() {
+        for (let setId in quizSets) {
+            const set = quizSets[setId];
+            const card = document.getElementById(`card-set-${setId}`);
+            const badge = document.getElementById(`badge-set-${setId}`);
+            const desc = document.getElementById(`desc-set-${setId}`);
+            const meta = document.getElementById(`meta-set-${setId}`);
+            
+            if (card && badge && desc && meta) {
+                const count = set.questions.length;
+                const targetCount = (setId == 1) ? 26 : 32;
+                if (count === 0) {
+                    card.classList.add('disabled-card');
+                    badge.className = "badge-status badge-pending";
+                    badge.innerText = "Chờ dữ liệu";
+                    desc.innerText = "Chưa có dữ liệu câu hỏi. Đang chờ cập nhật từ người dùng.";
+                    meta.innerText = `⏱ ${set.duration / 60} phút | 0 câu`;
+                } else if (count < targetCount) {
+                    card.classList.remove('disabled-card');
+                    badge.className = "badge-status badge-pending";
+                    badge.innerText = "Đang cập nhật";
+                    desc.innerText = `Bộ đề đang được cập nhật câu hỏi (${count}/${targetCount} câu). Bạn có thể làm thử.`;
+                    meta.innerText = `⏱ ${set.duration / 60} phút | ${count} câu`;
+                } else {
+                    card.classList.remove('disabled-card');
+                    badge.className = "badge-status badge-ready";
+                    badge.innerText = "Sẵn sàng";
+                    desc.innerText = (setId == 1) 
+                        ? "Bộ câu hỏi ma trận logic hình học không gian chuẩn hóa."
+                        : `Bộ đề 2 với ${count} câu hỏi logic tổng hợp đã hoàn thành.`;
+                    meta.innerText = `⏱ ${set.duration / 60} phút | ${count} câu`;
+                }
+            }
+        }
+    }
+
+    function startQuiz() {
+        questionsData = quizSets[selectedSetId].questions;
+        duration = quizSets[selectedSetId].duration;
+
+        document.getElementById('welcome-screen').style.display = 'none';
+        document.getElementById('quiz-screen').style.display = 'block';
+        document.getElementById('quiz-set-name').innerText = quizSets[selectedSetId].name;
+        
+        loadQuestion(0);
+        startTimer();
+    }
+
+    function loadQuestion(index) {
+        currentIndex = index;
+        const currentQuestion = questionsData[currentIndex];
+        
+        document.getElementById('question-title').innerText = `Câu hỏi ${currentIndex + 1} / ${questionsData.length}`;
+        
+        // Hiển thị/Ẩn câu hỏi văn bản
+        const textContainer = document.getElementById('question-text-container');
+        const textElem = document.getElementById('question-text');
+        if (currentQuestion.questionText) {
+            textElem.innerText = currentQuestion.questionText;
+            textContainer.style.display = 'block';
+        } else {
+            textContainer.style.display = 'none';
+        }
+
+        // Hiển thị/Ẩn hình ảnh câu hỏi
+        const imgContainer = document.getElementById('question-image-container');
+        const imgElem = document.getElementById('question-image');
+        if (currentQuestion.filename) {
+            imgElem.src = currentQuestion.filename;
+            imgContainer.style.display = 'flex';
+        } else {
+            imgContainer.style.display = 'none';
+        }
+
+        // Cập nhật thanh tiến độ
+        const progressPercent = ((currentIndex + 1) / questionsData.length) * 100;
+        document.getElementById('progress-bar').style.width = `${progressPercent}%`;
+
+        // Render các nút đáp án động
+        const optionsGrid = document.getElementById('options-grid');
+        optionsGrid.innerHTML = ''; // Xóa các đáp án cũ
+
+        const defaultLabels = ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"];
+        const optionLabels = currentQuestion.options || defaultLabels;
+        const selected = answers[currentQuestion.id];
+
+        optionLabels.forEach((label, i) => {
+            const btn = document.createElement('button');
+            btn.className = 'option-button';
+            if (selected === (i + 1)) {
+                btn.classList.add('selected');
+            }
+            btn.innerText = label;
+            btn.onclick = () => selectOption(i + 1);
+            optionsGrid.appendChild(btn);
+        });
+
+        // Cập nhật chỉ dẫn chọn đáp án
+        const instructionElem = document.getElementById('options-instruction');
+        if (currentQuestion.options) {
+            instructionElem.innerText = "Nhấp chọn một đáp án tương ứng dưới đây:";
+        } else {
+            instructionElem.innerText = "Nhấp chọn một đáp án tương ứng với vị trí trong hình (từ 1 đến 6):";
+        }
+
+        const prevBtn = document.getElementById('btn-prev');
+        const nextBtn = document.getElementById('btn-next');
+        const submitBtn = document.getElementById('btn-submit');
+
+        if (currentIndex === 0) {
+            prevBtn.classList.add('disabled');
+            prevBtn.disabled = true;
+        } else {
+            prevBtn.classList.remove('disabled');
+            prevBtn.disabled = false;
+        }
+
+        if (currentIndex === questionsData.length - 1) {
+            nextBtn.style.display = 'none';
+            submitBtn.style.display = 'inline-flex';
+        } else {
+            nextBtn.style.display = 'inline-flex';
+            submitBtn.style.display = 'none';
+        }
+    }
+
+    function selectOption(optionNumber) {
+        const currentQuestion = questionsData[currentIndex];
+        answers[currentQuestion.id] = optionNumber;
+        
+        const buttons = document.querySelectorAll('.option-button');
+        buttons.forEach((btn, i) => {
+            if (optionNumber === (i + 1)) {
+                btn.classList.add('selected');
+            } else {
+                btn.classList.remove('selected');
+            }
+        });
+
+        if (currentIndex < questionsData.length - 1) {
+            setTimeout(() => {
+                navigateQuestion(1);
+            }, 300);
+        }
+    }
+
+    function navigateQuestion(direction) {
+        const targetIndex = currentIndex + direction;
+        if (targetIndex >= 0 && targetIndex < questionsData.length) {
+            loadQuestion(targetIndex);
+        }
+    }
+
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+        
+        timerInterval = setInterval(() => {
+            duration--;
+            let mins = Math.floor(duration / 60);
+            let secs = duration % 60;
+
+            document.getElementById('timer-display').innerText = 
+                `${mins < 10 ? '0' : ''}${mins}:${secs < 10 ? '0' : ''}${secs}`;
+
+            if (duration <= 0) {
+                clearInterval(timerInterval);
+                processResults();
+            }
+        }, 1000);
+    }
+
+    function confirmSubmit() {
+        const totalAnswered = Object.keys(answers).length;
+        if (totalAnswered < questionsData.length) {
+            if (!confirm(`Bạn mới trả lời ${totalAnswered}/${questionsData.length} câu hỏi. Bạn có chắc chắn muốn nộp bài sớm không?`)) {
+                return;
+            }
+        } else {
+            if (!confirm("Bạn đã hoàn thành tất cả câu hỏi. Bạn có muốn nộp bài để chấm điểm ngay?")) {
+                return;
+            }
+        }
+        processResults();
+    }
+
+    function processResults() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        let correctCount = 0;
+        questionsData.forEach(q => {
+            if (answers[q.id] === q.correct) {
+                correctCount++;
+            }
+        });
+
+        // Công thức tính điểm IQ mô phỏng chuẩn (Base 85, Max 140)
+        // 26 câu đúng = 140 IQ. Tỷ lệ tăng dần tuyến tính để tham khảo.
+        const pct = correctCount / questionsData.length;
+        let iq = 85 + Math.round(pct * 55); 
+
+        document.getElementById('res-iq').innerText = iq;
+        document.getElementById('res-correct').innerText = correctCount;
+        document.getElementById('res-total').innerText = questionsData.length;
+
+        let evaluationText = "";
+        if (iq >= 130) {
+            evaluationText = "Xuất sắc! Bạn sở hữu tư duy logic không gian cực kỳ nhạy bén, tương đương với phân khúc trí tuệ của thành viên Mensa quốc tế.";
+        } else if (iq >= 115) {
+            evaluationText = "Rất tốt! Chỉ số thông minh của bạn vượt trội hơn mức trung bình của xã hội. Khả năng liên tưởng hình học và phát hiện quy luật của bạn hoạt động rất hiệu quả.";
+        } else if (iq >= 90) {
+            evaluationText = "Bình thường. Bạn có năng lực tư duy ở mức phổ thông ổn định. Nếu có thêm thời gian luyện tập, bạn hoàn toàn có thể đạt điểm số cao hơn.";
+        } else {
+            evaluationText = "Mức độ trung bình thấp. Có thể bạn chưa quen với các dạng biểu đồ ma trận logic này hoặc làm bài dưới áp lực thời gian. Đừng nản chí, hãy thử sức lại nhé!";
+        }
+
+        document.getElementById('res-text').innerText = evaluationText;
+
+        document.getElementById('quiz-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+    }
+
+    function resetQuiz() {
+        answers = {};
+        currentIndex = 0;
+        duration = quizSets[selectedSetId].duration;
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('review-screen').style.display = 'none';
+        document.getElementById('welcome-screen').style.display = 'block';
+        initWelcomeScreen();
+    }
+
+    function showReview() {
+        document.getElementById('result-screen').style.display = 'none';
+        document.getElementById('review-screen').style.display = 'block';
+        
+        const set = quizSets[selectedSetId];
+        document.getElementById('review-title').innerText = `Xem lại đáp án & Giải thích - ${set.name}`;
+        
+        const listContainer = document.getElementById('review-questions-list');
+        listContainer.innerHTML = '';
+        
+        set.questions.forEach((q, idx) => {
+            const card = document.createElement('div');
+            card.className = 'review-card';
+            
+            const userChoice = answers[q.id]; // 1-indexed, or undefined if skipped
+            const isCorrect = userChoice === q.correct;
+            
+            let statusBadge = '';
+            if (userChoice === undefined) {
+                statusBadge = '<span class="review-badge badge-unanswered">Chưa trả lời</span>';
+            } else if (isCorrect) {
+                statusBadge = '<span class="review-badge badge-correct">Đúng</span>';
+            } else {
+                statusBadge = '<span class="review-badge badge-incorrect">Sai</span>';
+            }
+            
+            let questionHTML = `
+                <div class="review-card-header">
+                    <span class="review-card-title">Câu hỏi ${idx + 1}</span>
+                    ${statusBadge}
+                </div>
+            `;
+            
+            if (q.questionText) {
+                questionHTML += `<div class="review-question-text">${q.questionText}</div>`;
+            }
+            
+            if (q.filename) {
+                questionHTML += `
+                    <div class="review-image-wrapper">
+                        <img src="${q.filename}" alt="Câu hỏi ${idx + 1}" />
+                    </div>
+                `;
+            }
+            
+            // Render options
+            const defaultLabels = ["Đáp án 1", "Đáp án 2", "Đáp án 3", "Đáp án 4", "Đáp án 5", "Đáp án 6"];
+            const optionLabels = q.options || defaultLabels;
+            
+            let optionsHTML = '<div class="option-review-grid">';
+            optionLabels.forEach((label, oIdx) => {
+                const optNum = oIdx + 1;
+                let optClass = 'option-review-button';
+                
+                if (optNum === q.correct) {
+                    optClass += ' correct';
+                } else if (optNum === userChoice) {
+                    optClass += ' user-wrong';
+                }
+                
+                let checkMark = '';
+                if (optNum === q.correct) {
+                    checkMark = ' (Đáp án đúng ✓)';
+                } else if (optNum === userChoice) {
+                    checkMark = ' (Lựa chọn của bạn ✗)';
+                }
+                
+                optionsHTML += `
+                    <div class="${optClass}">
+                        ${label}${checkMark}
+                    </div>
+                `;
+            });
+            optionsHTML += '</div>';
+            
+            questionHTML += optionsHTML;
+            
+            // Render explanation
+            if (q.explanation) {
+                questionHTML += `
+                    <div class="explanation-box">
+                        <strong>💡 Giải thích:</strong> ${q.explanation}
+                    </div>
+                `;
+            }
+            
+            card.innerHTML = questionHTML;
+            listContainer.appendChild(card);
+        });
+    }
+
+    function hideReview() {
+        document.getElementById('review-screen').style.display = 'none';
+        document.getElementById('result-screen').style.display = 'block';
+    }
+
+    // Tự động khởi tạo trạng thái khi tải trang
+    window.addEventListener('DOMContentLoaded', initWelcomeScreen);
+</script>
+
+</body>
+</html>
